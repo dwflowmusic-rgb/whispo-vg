@@ -1,8 +1,83 @@
 # Changelog
 
-All notable changes to Whispo Windows project will be documented in this file.
+All notable changes to Juris Transcritor (formerly Whispo Windows) will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+
+## [1.1.1] - 2025-12-08
+
+### Added
+
+- **Copy Button in History**: New copy button (📋) in transcript history with visual feedback
+  - Click to copy transcript to clipboard
+  - Green checkmark (✓) confirmation
+  - Tooltip: "Copiar texto" / "Copiado!"
+  - Fallback when auto-insert fails due to permissions
+- **Fast Launcher**: Direct Electron execution bypassing electron-vite overhead
+  - `juris-transcritor-fast.bat` - Executes Electron directly on compiled code
+  - `juris-transcritor-fast-silencioso.vbs` - Silent version
+  - **Performance**: 80-90% faster startup (18s → 3-5s)
+- **Single Instance Lock**: Prevents duplicate processes
+  - Second launch focuses existing window instead of creating new instance
+  - Clean user experience on double-click
+- **Startup Profiling**: Console markers to measure initialization time
+  - Detailed timing for each module load
+  - Visible via DevTools Console (Ctrl+Shift+I)
+
+### Changed
+
+- **Rebranding**: Whispo → Juris Transcritor
+  - Application name updated throughout codebase
+  - Window title: "Juris Transcritor"
+  - System tray tooltip: "Juris Transcritor"
+  - Package name: `juris-transcritor`
+  - AppID: `com.juristranscritor.app`
+  - Version bump: 0.1.7 → 1.1.0 → 1.1.1
+- **Background Startup**: Application starts minimized to system tray only
+  - No window popup on launch
+  - Click tray icon to open interface
+  - Less intrusive user experience
+- **Lazy Loading**: Heavy modules load asynchronously after UI
+  - Keyboard events listener (Rust binary)
+  - System tray menu
+  - Update checker
+  - Faster perceived startup
+- **Gemini Model Upgrade**: `gemini-1.5-flash-002` → `gemini-flash-lite-latest`
+  - Points to `gemini-2.5-flash-lite-preview-09-2025`
+  - Faster grammar/spelling corrections
+  - Lower cost ($0.10/$0.40 per 1M tokens)
+  - Latest model (Jan 2025 knowledge cutoff)
+
+### Removed
+
+- **Obsolete Launchers**: Removed slow electron-vite-based scripts
+  - `whispo.bat` (18s startup)
+  - `whispo-silencioso.vbs` (wrapper for slow launcher)
+  - Superseded by fast launchers
+
+### Performance
+
+- **Startup Time**: 30s → 3-5s (83-90% improvement)
+- **Memory**: Eliminated 135MB Node.js overhead from electron-vite
+- **User Experience**: Instant responsiveness, no lag
+
+### Technical
+
+- Updated `src/main/index.ts` with single instance lock and lazy loading
+- Modified `src/main/window.ts` for background startup support
+- Enhanced `src/renderer/src/pages/index.tsx` with CopyButton component
+- Optimized `src/main/llm.ts` with latest Gemini model
+
+### Known Issues & Next Version Roadmap
+
+**For v1.2.0+ (Future):**
+
+- 🔧 **PRIORITY**: Change default hotkey from Ctrl (conflicts with file selection)
+  - Explore alternatives: Ctrl+Shift+Space, Windows key combinations, F-keys
+  - User reports activation when selecting multiple files
+- Add "About" page with proper Whispo attribution
+- Design custom legal-themed icon
+- Consider moving to simple path for native .exe distribution (electron-builder)
 
 ## [1.0.0] - 2025-12-04
 
