@@ -9,9 +9,10 @@ REGRAS IMPORTANTES:
 1. Retorne APENAS o texto corrigido
 2. NÃO inclua explicações, comentários ou prefixos como "Aqui está:" ou "Texto corrigido:"
 3. NÃO inclua as instruções originais na resposta
-4. Mantenha o significado original intacto`
+4. Mantenha o significado original intacto
+5. NUNCA termine o texto com a frase "como base" ou variações.`
 
-// Clean up common LLM response prefixes that shouldn't be there
+// Clean up common LLM response prefixes and suffixes
 function cleanLLMResponse(response: string): string {
   let cleaned = response.trim()
 
@@ -22,8 +23,19 @@ function cleanLLMResponse(response: string): string {
     /^(o texto corrigido é|the corrected text is)[:\s]*/i,
   ]
 
+  // Remove specific hallucinated suffixes like "como base"
+  // More aggressive regex to catch " como base.", ", como base", "\ncomo base", etc
+  const suffixesToRemove = [
+    /[\s,.-]*como base[\s,.-]*$/i,
+    /como base\.?$/i,
+  ]
+
   for (const prefix of prefixesToRemove) {
     cleaned = cleaned.replace(prefix, '')
+  }
+
+  for (const suffix of suffixesToRemove) {
+    cleaned = cleaned.replace(suffix, '')
   }
 
   return cleaned.trim()
@@ -51,8 +63,13 @@ export async function postProcessTranscript(transcript: string) {
       if (!config.geminiApiKey) throw new Error("Gemini API key is required")
 
       const gai = new GoogleGenerativeAI(config.geminiApiKey)
+
+      // Dynamic model selection
+      // Fallback to Flash Lite if not set
+      const modelName = config.geminiModel || "gemini-flash-lite-latest"
+
       const gModel = gai.getGenerativeModel({
-        model: "gemini-flash-lite-latest",
+        model: modelName,
         systemInstruction: SYSTEM_INSTRUCTION,
       })
 
@@ -107,4 +124,3 @@ export async function postProcessTranscript(transcript: string) {
     return transcript
   }
 }
-

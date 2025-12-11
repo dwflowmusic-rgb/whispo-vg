@@ -1,5 +1,6 @@
 import { Control, ControlGroup } from "@renderer/components/ui/control"
 import { Input } from "@renderer/components/ui/input"
+import { HelpButton } from "../components/HelpButton"
 import {
   useConfigQuery,
   useSaveConfigMutation,
@@ -8,7 +9,6 @@ import { Config } from "@shared/types"
 
 export function Component() {
   const configQuery = useConfigQuery()
-
   const saveConfigMutation = useSaveConfigMutation()
 
   const saveConfig = (config: Partial<Config>) => {
@@ -24,7 +24,12 @@ export function Component() {
 
   return (
     <div className="grid gap-4">
-      <ControlGroup title="OpenAI">
+      <ControlGroup className="mb-4" title={
+        <div className="flex items-center gap-2">
+          OpenAI
+          <HelpButton module="openai" />
+        </div>
+      }>
         <Control label="API Key" className="px-3">
           <Input
             type="password"
@@ -34,9 +39,9 @@ export function Component() {
                 openaiApiKey: e.currentTarget.value,
               })
             }}
+            placeholder="sk-..."
           />
         </Control>
-
         <Control label="API Base URL" className="px-3">
           <Input
             type="url"
@@ -51,7 +56,12 @@ export function Component() {
         </Control>
       </ControlGroup>
 
-      <ControlGroup title="Groq">
+      <ControlGroup className="mb-4" title={
+        <div className="flex items-center gap-2">
+          Groq
+          <HelpButton module="groq" />
+        </div>
+      }>
         <Control label="API Key" className="px-3">
           <Input
             type="password"
@@ -61,9 +71,9 @@ export function Component() {
                 groqApiKey: e.currentTarget.value,
               })
             }}
+            placeholder="gsk_..."
           />
         </Control>
-
         <Control label="API Base URL" className="px-3">
           <Input
             type="url"
@@ -78,31 +88,57 @@ export function Component() {
         </Control>
       </ControlGroup>
 
-      <ControlGroup title="Gemini">
-        <Control label="API Key" className="px-3">
-          <Input
-            type="password"
-            defaultValue={configQuery.data.geminiApiKey}
-            onChange={(e) => {
-              saveConfig({
-                geminiApiKey: e.currentTarget.value,
-              })
-            }}
-          />
-        </Control>
+      <ControlGroup title={
+        <div className="flex items-center gap-2">
+          Gemini (Google)
+          <HelpButton module="gemini" />
+        </div>
+      }>
+        <div className="space-y-4 px-3">
+          <Control label="API Key" className="p-0 border-none">
+            <Input
+              type="password"
+              defaultValue={configQuery.data.geminiApiKey}
+              onChange={(e) => {
+                saveConfig({
+                  geminiApiKey: e.currentTarget.value,
+                })
+              }}
+              placeholder="AIza..."
+            />
+          </Control>
 
-        <Control label="API Base URL" className="px-3">
-          <Input
-            type="url"
-            placeholder="https://generativelanguage.googleapis.com"
-            defaultValue={configQuery.data.geminiBaseUrl}
-            onChange={(e) => {
-              saveConfig({
-                geminiBaseUrl: e.currentTarget.value,
-              })
-            }}
-          />
-        </Control>
+          <Control label="API Base URL" className="p-0 border-none">
+            <Input
+              type="url"
+              placeholder="https://generativelanguage.googleapis.com"
+              defaultValue={configQuery.data.geminiBaseUrl}
+              onChange={(e) => {
+                saveConfig({
+                  geminiBaseUrl: e.currentTarget.value,
+                })
+              }}
+            />
+          </Control>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Modelo</label>
+            <select
+              className="flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1"
+              defaultValue={configQuery.data.geminiModel || "gemini-flash-lite-latest"}
+              onChange={(e) => {
+                saveConfig({
+                  geminiModel: e.currentTarget.value,
+                })
+              }}
+            >
+              <option value="gemini-flash-lite-latest">Flash Lite 2.5 (Rápido/Padrão)</option>
+              <option value="gemini-1.5-flash-latest">Flash 1.5 (Equilibrado)</option>
+              <option value="gemini-1.5-pro-latest">Pro 1.5 (Avançado/Técnico)</option>
+              <option value="gemini-2.0-flash-exp">Flash 2.0 (Experimental)</option>
+            </select>
+          </div>
+        </div>
       </ControlGroup>
     </div>
   )

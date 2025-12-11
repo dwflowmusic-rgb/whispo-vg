@@ -151,6 +151,7 @@ export function listenToKeyboardEvents() {
             shouldRevertCapsLock = true  // We need to revert CapsLock after recording
 
             console.log("[CAPSLOCK] Start recording")
+
             showPanelWindowAndStartRecording()
           }, 800)
         } else {

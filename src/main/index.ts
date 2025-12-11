@@ -43,25 +43,29 @@ if (!gotTheLock) {
   })
 }
 
+import { createSplashWindow, closeSplashWindow } from "./splash"
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 console.time("[STARTUP] Total app initialization")
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   // Set app user model id for windows
   electronApp.setAppUserModelId(process.env.APP_ID)
 
   const accessibilityGranted = isAccessibilityGranted()
 
+  // 1. Show Splash Screen immediately
+  const splash = createSplashWindow()
+
   Menu.setApplicationMenu(createAppMenu())
-
   registerIpcMain(router)
-
   registerServeProtocol()
 
+  // 2. Initialize Windows heavily in background
   console.time("[STARTUP] Creating main window")
   if (accessibilityGranted) {
-    createMainWindow({ showOnStartup: false })  // Inicia apenas na bandeja
+    createMainWindow({ showOnStartup: false })  // Hidden initially
   } else {
     createSetupWindow()
   }
@@ -71,33 +75,26 @@ app.whenReady().then(() => {
   createPanelWindow()
   console.timeEnd("[STARTUP] Creating panel window")
 
-  // ============================================================
-  // LAZY LOADING - Carrega módulos pesados DEPOIS do startup
-  // Executa após o event loop liberar (não bloqueia UI)
-  // ============================================================
-  setImmediate(() => {
-    console.time("[STARTUP] Loading keyboard events")
-    listenToKeyboardEvents()
-    console.timeEnd("[STARTUP] Loading keyboard events")
-  })
+  // 3. Load modules
+  console.time("[STARTUP] Loading keyboard events")
+  listenToKeyboardEvents()
+  console.timeEnd("[STARTUP] Loading keyboard events")
 
-  setImmediate(() => {
-    console.time("[STARTUP] Loading tray")
-    initTray()
-    console.timeEnd("[STARTUP] Loading tray")
-  })
+  console.time("[STARTUP] Loading tray")
+  initTray()
+  console.timeEnd("[STARTUP] Loading tray")
 
-  setImmediate(() => {
-    console.time("[STARTUP] Loading updater")
-    import("./updater").then((res) => {
-      res.init()
-      console.timeEnd("[STARTUP] Loading updater")
-    }).catch((err) => {
-      console.error("[STARTUP] Updater failed:", err)
-    })
-  })
+  // 4. Wait a bit for splash effect (marketing requirement: user feedback)
+  await new Promise(resolve => setTimeout(resolve, 2500))
 
-  // Marca final do startup - tudo carregado
+  // 5. Cleanup Splash
+  closeSplashWindow()
+
+  // Lazy load updater last
+  import("./updater").then((res) => {
+    res.init()
+  }).catch((err) => console.error("[STARTUP] Updater failed:", err))
+
   console.timeEnd("[STARTUP] Total app initialization")
 
   // Default open or close DevTools by F12 in development

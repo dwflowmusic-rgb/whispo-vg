@@ -1,6 +1,8 @@
 use rdev::{listen, Event, EventType};
 use serde::Serialize;
 use serde_json::json;
+use std::thread;
+use std::time::Duration;
 
 #[derive(Serialize)]
 struct RdevEvent {
@@ -32,92 +34,69 @@ fn deal_event_to_json(event: Event) -> RdevEvent {
             })
             .to_string();
         }
-        EventType::MouseMove { x, y } => {
-            jsonify_event.event_type = "MouseMove".to_string();
-            jsonify_event.data = json!({
-                "x": x,
-                "y": y
-            })
-            .to_string();
-        }
-        EventType::ButtonPress(key) => {
-            jsonify_event.event_type = "ButtonPress".to_string();
-            jsonify_event.data = json!({
-                "key": format!("{:?}", key)
-            })
-            .to_string();
-        }
-        EventType::ButtonRelease(key) => {
-            jsonify_event.event_type = "ButtonRelease".to_string();
-            jsonify_event.data = json!({
-                "key": format!("{:?}", key)
-            })
-            .to_string();
-        }
-        EventType::Wheel { delta_x, delta_y } => {
-            jsonify_event.event_type = "Wheel".to_string();
-            jsonify_event.data = json!({
-                "delta_x": delta_x,
-                "delta_y": delta_y
-            })
-            .to_string();
-        }
+        _ => {}
     }
-
     jsonify_event
 }
 
-// OLD: Slow character-by-character method (kept as fallback)
 fn write_text_slow(text: &str) {
     use enigo::{Enigo, Keyboard, Settings};
     let mut enigo = Enigo::new(&Settings::default()).unwrap();
     enigo.text(text).unwrap();
 }
 
-// NEW: Fast clipboard + Ctrl+V method
 fn write_text_fast(text: &str) {
-    use clipboard_win::{formats, set_clipboard, get_clipboard_string};
-    use enigo::{Enigo, Key, Keyboard, Settings, Direction};
-    
-    // Save current clipboard content
+    use clipboard_win::{formats, get_clipboard_string, set_clipboard};
+    use enigo::{Direction, Enigo, Key, Keyboard, Settings};
+
+    // Retry logic for clipboard (helps when app is in background/minimized)
     let old_clipboard = get_clipboard_string().unwrap_or_default();
-    
-    // Set new text to clipboard
-    if let Err(e) = set_clipboard(formats::Unicode, text) {
-        eprintln!("Failed to set clipboard: {:?}", e);
-        // Fallback to slow method if clipboard fails
+    let mut clipboard_set = false;
+
+    // Try up to 3 times to set clipboard
+    for _ in 0..3 {
+        if let Ok(_) = set_clipboard(formats::Unicode, text) {
+            clipboard_set = true;
+            break;
+        }
+        thread::sleep(Duration::from_millis(50));
+    }
+
+    if !clipboard_set {
+        eprintln!("Failed to set clipboard after retries. Fallback to slow write.");
         write_text_slow(text);
         return;
     }
-    
+
     // Small delay to ensure clipboard is ready
-    std::thread::sleep(std::time::Duration::from_millis(30));
-    
+    thread::sleep(Duration::from_millis(50));
+
     // Simulate Ctrl+V (paste)
     let mut enigo = Enigo::new(&Settings::default()).unwrap();
-    
+
     // Press Ctrl
     if let Err(e) = enigo.key(Key::Control, Direction::Press) {
         eprintln!("Failed to press Ctrl: {:?}", e);
-        write_text_slow(text);
+        write_text_slow(text); // Fallback
         return;
     }
-    
+
     // Press V
     if let Err(e) = enigo.key(Key::Unicode('v'), Direction::Click) {
         eprintln!("Failed to press V: {:?}", e);
     }
-    
+
     // Release Ctrl
     if let Err(e) = enigo.key(Key::Control, Direction::Release) {
         eprintln!("Failed to release Ctrl: {:?}", e);
     }
-    
+
     // Wait for paste to complete
-    std::thread::sleep(std::time::Duration::from_millis(100));
-    
-    // Restore original clipboard content
+    thread::sleep(Duration::from_millis(100));
+
+    // Restore original clipboard
     if !old_clipboard.is_empty() {
+        // Try to restore, but don't panic if it fails
         let _ = set_clipboard(formats::Unicode, &old_clipboard);
     }
 }
@@ -131,30 +110,25 @@ fn main() {
                 let event = deal_event_to_json(event);
                 println!("{}", serde_json::to_string(&event).unwrap());
             }
-
             _ => {}
         }) {
             println!("!error: {:?}", error);
         }
     }
 
-    // Fast write using clipboard + Ctrl+V
     if args.len() > 2 && args[1] == "write" {
         let text = args[2].clone();
         write_text_fast(text.as_str());
     }
-    
-    // Fallback: slow write using character simulation (for compatibility)
+
     if args.len() > 2 && args[1] == "write-slow" {
         let text = args[2].clone();
         write_text_slow(text.as_str());
     }
-    
-    // Toggle CapsLock state (used to revert after recording)
+
     if args.len() > 1 && args[1] == "toggle-caps" {
-        use enigo::{Enigo, Key, Keyboard, Settings, Direction};
+        use enigo::{Direction, Enigo, Key, Keyboard, Settings};
         let mut enigo = Enigo::new(&Settings::default()).unwrap();
-        // Press and release CapsLock to toggle its state
         let _ = enigo.key(Key::CapsLock, Direction::Click);
     }
 }

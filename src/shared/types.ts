@@ -21,6 +21,7 @@ export type Config = {
 
   geminiApiKey?: string
   geminiBaseUrl?: string
+  geminiModel?: string // "gemini-flash-lite-latest" | "gemini-1.5-flash-latest" | "gemini-1.5-pro-latest" | "gemini-2.0-flash-exp"
 
   transcriptPostProcessingEnabled?: boolean
   transcriptPostProcessingProviderId?: CHAT_PROVIDER_ID
