@@ -23,6 +23,8 @@ module.exports = {
   asarUnpack: ["resources/**", "node_modules/**"],
   win: {
     executableName: "whispo",
+    // Desabilita assinatura de código para builds locais
+    signAndEditExecutable: false,
   },
   nsis: {
     artifactName: "${name}-${version}-setup.${ext}",

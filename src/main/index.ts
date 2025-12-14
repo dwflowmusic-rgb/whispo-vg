@@ -28,7 +28,7 @@ if (!gotTheLock) {
   app.quit()
 } else {
   // Primeira instância - Handle caso usuário tente abrir de novo
-  app.on('second-instance', (event, commandLine, workingDirectory) => {
+  app.on('second-instance', (_event, _commandLine, _workingDirectory) => {
     console.log("[SECOND-INSTANCE] User tried to open app again, focusing existing window")
 
     // Foca na janela principal se ela existir

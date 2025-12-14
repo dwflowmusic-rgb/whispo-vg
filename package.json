@@ -1,6 +1,6 @@
 {
   "name": "juris-transcritor",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "type": "module",
   "description": "AI-powered dictation for legal professionals",
   "main": "./out/main/index.js",
@@ -22,7 +22,7 @@
     "build:linux": "electron-vite build && electron-builder --linux --config electron-builder.config.cjs",
     "release": "node ./scripts/release.js",
     "fix-pnpm-windows": "node ./scripts/fix-pnpm-windows.js",
-    "build-rs": "sh scripts/build-rs.sh"
+    "build-rs": "powershell -ExecutionPolicy Bypass -File scripts/build-rs.ps1"
   },
   "dependencies": {
     "@egoist/electron-panel-window": "^8.0.3"
